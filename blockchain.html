@@ -296,6 +296,10 @@
               <option value="0xVoter...4444">0xVoter...4444 (Lucas)</option>
               <option value="0xVoter...5555">0xVoter...5555 (David)</option>
               <option value="0xVoter...6666">0xVoter...6666 (Arthur)</option>
+              <option value="0xVoter...7777">0xVoter...7777 (Jefferson)</option>
+              <option value="0xVoter...8888">0xVoter...8888 (Elton)</option>
+              <option value="0xVoter...9999">0xVoter...9999 (Vinicius)</option>
+              <option value="0xVoter...1010">0xVoter...1010 (Enderson)</option>
             </select>
             <button class="btn btn-success" onclick="doRegister()" style="flex-shrink:0;">
               <i class="ti ti-check" aria-hidden="true"></i> Registrar
@@ -380,8 +384,8 @@
         <div class="winner-box" id="winner-box"></div>
         <div class="gas-meter">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <span style="font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;">Gas do bloco atual</span>
-            <span style="font-family:var(--mono);font-size:12px;" id="block-gas-display">0 / 300,000</span>
+            <span style="font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;">Gas do bloco atual <span style="font-weight:400;text-transform:none;">(transações de voto)</span></span>
+            <span style="font-family:var(--mono);font-size:12px;" id="block-gas-display">0 / 200,000</span>
           </div>
           <div class="gas-bar-track" style="height:10px;">
             <div class="gas-bar-fill" id="block-gas-fill" style="width:0%"></div>
@@ -389,13 +393,13 @@
           <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:3px;">
             <span>0</span>
             <span id="block-gas-pct">0%</span>
-            <span>Block Gas Limit: 300,000</span>
+            <span>Block Gas Limit: 200,000</span>
           </div>
           <div id="block-full-banner" style="display:none;margin-top:8px;padding:9px 12px;background:var(--red50);border:1px solid var(--red600);border-radius:var(--radius-sm);font-size:12px;color:var(--red800);">
             <i class="ti ti-lock" style="font-size:13px;margin-right:5px" aria-hidden="true"></i>
-            <strong>Bloco cheio</strong> — novas transações rejeitadas até o próximo bloco ser minerado.
+            <strong>Block Gas Limit atingido.</strong> Novas transações não são executadas nem cobradas — ficam na mempool aguardando o próximo bloco. Diferente do Out of Gas da transação, onde a execução começa, falha e o gas é cobrado.
             <button class="btn btn-success" onclick="mineNewBlock()" style="margin-top:6px;width:100%;justify-content:center;">
-              <i class="ti ti-pickaxe" aria-hidden="true"></i> Minerar novo bloco (zerar gas do bloco)
+              <i class="ti ti-pickaxe" aria-hidden="true"></i> Minerar novo bloco (liberar espaço)
             </button>
           </div>
           <div class="sep" style="margin:10px 0 8px;"></div>
@@ -435,10 +439,29 @@
   <div class="panel">
     <div class="panel-header">
       <i class="ti ti-list" style="font-size:16px;color:var(--text2)" aria-hidden="true"></i>
-      <span class="panel-title">Log de transações</span>
+      <span class="panel-title">Log de transações confirmadas</span>
       <button class="btn" style="padding:4px 10px;font-size:11px;" onclick="clearLog()"><i class="ti ti-trash" aria-hidden="true"></i></button>
     </div>
     <div class="tx-log" id="tx-log"><div class="tx-empty">Nenhuma transação ainda</div></div>
+  </div>
+</div>
+
+<!-- MEMPOOL -->
+<div class="panel" style="margin-bottom:16px;">
+  <div class="panel-header">
+    <i class="ti ti-clock" style="font-size:16px;color:var(--amber600)" aria-hidden="true"></i>
+    <span class="panel-title">Mempool — transações pendentes</span>
+    <span class="badge badge-amber" id="mempool-count">0 pendentes</span>
+  </div>
+  <div id="mempool-empty" style="padding:16px;text-align:center;color:var(--text3);font-size:13px;">
+    <i class="ti ti-circle-check" style="font-size:22px;display:block;margin-bottom:6px;color:var(--teal400)" aria-hidden="true"></i>
+    Mempool vazia — todas as transações foram incluídas em blocos
+  </div>
+  <div id="mempool-list" style="display:none;">
+    <div style="padding:10px 14px 6px;font-size:11px;color:var(--text2);line-height:1.6;border-bottom:0.5px solid var(--border);">
+      Transações aguardando espaço no próximo bloco. Nenhum gas cobrado ainda. Ao minerar um novo bloco, serão incluídas na ordem de chegada se couberem.
+    </div>
+    <div id="mempool-items"></div>
   </div>
 </div>
 
@@ -522,10 +545,11 @@
 <script>
 let deployed=false, candidates=[], registered={}, voted={}, voteCount={}, blockNum=0, gasTotal=0, txCount=0;
 const GAS_MAX=5000000;
-// Gas limit per block (didactic value — real Ethereum uses ~30M, but 300k makes the demo fill up visibly)
-const BLOCK_GAS_LIMIT=300000;
-let currentBlockGas=0; // gas used so far in the current (pending) block
-const NAMES={'0xVoter...1111':'Ana','0xVoter...2222':'Pedro','0xVoter...3333':'Julia','0xVoter...4444':'Lucas', '0xVoter...5555':'David', '0xVoter...6666':'Arthur'};
+const BLOCK_GAS_LIMIT=200000;  // ~3-4 votes fill the block (each vote ~52k-60k gas)
+let currentBlockGas=0;
+// Mempool: array of pending tx objects { label, gasRequired, voter, candIdx, name, candName }
+let mempool=[];
+const NAMES={'0xVoter...1111':'Ana','0xVoter...2222':'Pedro','0xVoter...3333':'Julia','0xVoter...4444':'Lucas', '0xVoter...5555':'David', '0xVoter...6666':'Arthur', '0xVoter...7777':'Jefferson','0xVoter...8888':'Elton', '0xVoter...9999':'Vinicius','0xVoter...1010':'Enderson',};
 const BAR_COLORS=['#378ADD','#1D9E75','#EF9F27','#D85A30'];
 
 // Block chain data model
@@ -612,18 +636,27 @@ function addTx(from,desc,gas,ok=true){
 }
 
 function updateGas(g){
+  // Counts toward BOTH session total and current block gas limit
   gasTotal+=g;
   currentBlockGas+=g;
-
-  // --- session total bar ---
   document.getElementById('gas-total').textContent=gasTotal.toLocaleString()+' gas';
   const sessionPct=Math.min(100,(gasTotal/GAS_MAX)*100);
-  const sessionFill=document.getElementById('gas-fill');
-  sessionFill.style.width=sessionPct+'%';
-  sessionFill.className='gas-bar-fill'+(sessionPct>80?' danger':sessionPct>50?' warn':'');
-
-  // --- block gas bar ---
+  const sf=document.getElementById('gas-fill');
+  sf.style.width=sessionPct+'%';
+  sf.className='gas-bar-fill'+(sessionPct>80?' danger':sessionPct>50?' warn':'');
   renderBlockGasBar();
+}
+
+function updateGasSessionOnly(g){
+  // Deploy and register: count toward session total only — not toward block gas limit.
+  // In a real network these would fill blocks too, but keeping them separate makes
+  // the block-gas-limit demo legible (otherwise deploy alone would fill the block).
+  gasTotal+=g;
+  document.getElementById('gas-total').textContent=gasTotal.toLocaleString()+' gas';
+  const sessionPct=Math.min(100,(gasTotal/GAS_MAX)*100);
+  const sf=document.getElementById('gas-fill');
+  sf.style.width=sessionPct+'%';
+  sf.className='gas-bar-fill'+(sessionPct>80?' danger':sessionPct>50?' warn':'');
 }
 
 function renderBlockGasBar(){
@@ -651,22 +684,93 @@ function renderBlockGasBar(){
   }
 }
 
-function mineNewBlock(){
-  // Simulate the network mining a new empty block, resetting block gas to 0
-  currentBlockGas=0;
-  addBlock('Novo bloco (vazio)',['bloco minerado — gas zerado'],'newblock');
-  renderBlockGasBar();
-  // Re-enable transaction buttons
-  ['btn-deploy'].forEach(id=>{const el=document.getElementById(id);if(el&&deployed)el.disabled=true;});
-  document.querySelectorAll('.btn-success').forEach(b=>{b.disabled=false;});
-  // Re-enable vote button only if deploy happened
-  if(deployed){
-    const voteBtn=document.getElementById('btn-vote');
-    if(voteBtn) voteBtn.disabled=false;
-    const dvoteBtn=document.getElementById('btn-dvote');
-    if(dvoteBtn) dvoteBtn.disabled=false;
+function renderMempool(){
+  const count=mempool.length;
+  document.getElementById('mempool-count').textContent=count+' pendente'+(count!==1?'s':'');
+  document.getElementById('mempool-count').className='badge '+(count>0?'badge-amber':'badge-gray');
+  const empty=document.getElementById('mempool-empty');
+  const list=document.getElementById('mempool-list');
+  const items=document.getElementById('mempool-items');
+  if(count===0){
+    empty.style.display='block';
+    list.style.display='none';
+    return;
   }
-  showToast('toast-vote','Novo bloco minerado — Block Gas Limit zerado. Transações aceitas novamente.','ok');
+  empty.style.display='none';
+  list.style.display='block';
+  items.innerHTML=mempool.map((tx,i)=>`
+    <div style="padding:10px 14px;border-bottom:0.5px solid var(--border);font-size:12px;display:flex;align-items:center;gap:10px;animation:fadeIn 0.3s ease;">
+      <span style="width:20px;height:20px;border-radius:50%;background:var(--amber50);color:var(--amber800);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0;">${i+1}</span>
+      <div style="flex:1;">
+        <div style="font-weight:500;">${tx.label}</div>
+        <div style="color:var(--text3);font-family:var(--mono);font-size:11px;margin-top:2px;">gas estimado: ${tx.gasRequired.toLocaleString()} · gas limit: ${tx.gasLimit.toLocaleString()}</div>
+      </div>
+      <span class="badge badge-amber" style="flex-shrink:0;">pendente</span>
+    </div>`).join('');
+}
+
+function mineNewBlock(){
+  // 1. Start fresh block — gas counter resets to 0
+  currentBlockGas=0;
+  const includedLabels=[];
+  const stillPending=[];
+
+  // 2. Drain mempool in arrival order — include each tx if it fits in this block
+  for(const tx of mempool){
+    const fitsInBlock = currentBlockGas + tx.gasRequired <= BLOCK_GAS_LIMIT;
+    if(!fitsInBlock){ stillPending.push(tx); continue; }
+
+    if(tx.type==='vote'){
+      // Re-validate requires — state could have changed since tx was queued
+      const requiresOk = !voted[tx.voter] && registered[tx.voter] && tx.gasRequired <= tx.gasLimit;
+      if(!requiresOk){ stillPending.push(tx); continue; }
+
+      // Execute: commit state changes
+      voted[tx.voter]=true;
+      voteCount[tx.candIdx]=(voteCount[tx.candIdx]||0)+1;
+      currentBlockGas+=tx.gasRequired;   // count gas into THIS block
+      gasTotal+=tx.gasRequired;          // count into session total too
+      includedLabels.push('votar: '+tx.name+' → '+tx.candName);
+      addTx(tx.voter,`[MEMPOOL→BLOCO] votar — ${tx.name} → ${tx.candName}`,tx.gasRequired,true);
+      updateLastTxDetail(tx.gasRequired,tx.gasLimit,false);
+      renderState();
+      document.getElementById('tamper-section').style.opacity='1';
+      document.getElementById('tamper-section').style.pointerEvents='auto';
+      updateTamperBlockSelect();
+    }
+  }
+
+  mempool=stillPending;
+
+  // 3. Create the block on-chain with everything that was included
+  addBlock(
+    includedLabels.length>0?`Bloco: ${includedLabels.length} tx da mempool`:'Novo bloco (vazio)',
+    includedLabels.length>0?includedLabels:['bloco vazio'],
+    includedLabels.length>0?'mempool-drain':'newblock'
+  );
+
+  // 4. Update all UI — gas bars reflect currentBlockGas which already has the new txs counted
+  const sessionPct=Math.min(100,(gasTotal/GAS_MAX)*100);
+  document.getElementById('gas-total').textContent=gasTotal.toLocaleString()+' gas';
+  const sf=document.getElementById('gas-fill');
+  sf.style.width=sessionPct+'%';
+  sf.className='gas-bar-fill'+(sessionPct>80?' danger':sessionPct>50?' warn':'');
+
+  renderBlockGasBar();
+  renderMempool();
+
+  // 5. Re-enable transaction buttons
+  document.querySelectorAll('.btn-success').forEach(b=>{b.disabled=false;});
+  if(deployed){
+    const vb=document.getElementById('btn-vote');if(vb)vb.disabled=false;
+    const dv=document.getElementById('btn-dvote');if(dv)dv.disabled=false;
+  }
+
+  const msg=includedLabels.length>0
+    ?`Novo bloco minerado — ${includedLabels.length} transação(ões) da mempool incluídas e executadas. Gas do bloco: ${currentBlockGas.toLocaleString()}. ${stillPending.length>0?stillPending.length+' tx ainda na mempool.':''}`
+    :'Novo bloco vazio minerado — Block Gas Limit zerado.';
+  showToast('toast-vote',msg,'ok');
+  setStep(4);
 }
 
 function renderState(){
@@ -969,7 +1073,9 @@ function updateLastTxDetail(used, limit, reverted){
 // ---- MAIN ACTIONS ----
 function doDeploy(){
   if(currentBlockGas>=BLOCK_GAS_LIMIT){
-    showToast('toast-deploy',`<strong>Bloco cheio!</strong> Deploy pendente na mempool — aguarda o próximo bloco.`,'err');
+    showToast('toast-deploy',
+      `<strong>Bloco cheio — deploy na mempool.</strong> Nenhum gas cobrado. Aguarda o próximo bloco.`,
+      'err');
     return;
   }
   const raw=document.getElementById('inp-cands').value;
@@ -981,7 +1087,7 @@ function doDeploy(){
   const gas=rndGas(320000);
   addBlock('Deploy contrato',['deploy: Votacao.sol'],'deploy');
   addTx('0xDono...A1B2','deploy: contrato Votacao',gas);
-  updateGas(gas);renderState();
+  updateGasSessionOnly(gas);renderState();
   document.getElementById('badge-deploy').className='badge badge-teal';
   document.getElementById('badge-deploy').textContent='Concluído';
   document.getElementById('btn-deploy').disabled=true;
@@ -995,7 +1101,9 @@ function doDeploy(){
 function doRegister(){
   if(!deployed)return;
   if(currentBlockGas>=BLOCK_GAS_LIMIT){
-    showToast('toast-reg',`<strong>Bloco cheio!</strong> Transação pendente na mempool — aguarda o próximo bloco.`,'err');
+    showToast('toast-reg',
+      `<strong>Bloco cheio — transação na mempool.</strong> Nenhum gas cobrado. Aguarda o próximo bloco.`,
+      'err');
     return;
   }
   const voter=document.getElementById('sel-voter').value;
@@ -1006,7 +1114,7 @@ function doRegister(){
   const gas=rndGas(45000);
   addBlock(`Registro ${name}`,['registrar: '+name],`reg:${name}`);
   addTx('0xDono...A1B2',`registrar eleitor ${name}`,gas);
-  updateGas(gas);renderState();
+  updateGasSessionOnly(gas);renderState();
   showToast('toast-reg',`${name} registrado — ${gas.toLocaleString()} gas`,'ok');
   const regCount=Object.values(registered).filter(Boolean).length;
   if(regCount>=1){
@@ -1024,12 +1132,19 @@ function doVote(){
   const candName=candidates[candIdx];
   const gasLimit=getGasLimit();
 
-  // --- Block gas limit check: reject before even trying ---
+  // --- Block gas limit: tx not executed, not charged — queued in mempool ---
   if(currentBlockGas>=BLOCK_GAS_LIMIT){
+    const pendingTx={
+      type:'vote', voter, candIdx, name, candName,
+      gasRequired:rndGas(52000), gasLimit,
+      label:`votar — ${name} → ${candName}`
+    };
+    mempool.push(pendingTx);
+    renderMempool();
     showToast('toast-vote',
-      `<strong>Bloco cheio!</strong> Block Gas Limit atingido (${BLOCK_GAS_LIMIT.toLocaleString()}). ` +
-      `Transação enviada para a mempool — aguarda o próximo bloco.`,'err');
-    addTx(voter,`[BLOCO CHEIO] votar(${candIdx}) — pendente na mempool`,0,false);
+      `<strong>Bloco cheio — transação adicionada à mempool.</strong> ` +
+      `Nenhum gas cobrado. Será incluída quando um novo bloco for minerado.`,
+      'warn');
     return;
   }
   // Gas cost for votar(): base 52000 + small random variance
