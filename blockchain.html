@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Contract Demo — Blockchain SD</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #F8F7F4; --surface: #FFFFFF; --surface2: #F1EFE8;
+    --border: rgba(0,0,0,0.1); --border2: rgba(0,0,0,0.18);
+    --text: #1A1A1A; --text2: #666660; --text3: #999990;
+    --blue50:#E6F1FB; --blue800:#0C447C; --blue600:#185FA5; --blue200:#85B7EB;
+    --teal50:#E1F5EE; --teal800:#085041; --teal600:#0F6E56; --teal400:#1D9E75;
+    --amber50:#FAEEDA; --amber800:#633806; --amber600:#854F0B; --amber400:#EF9F27;
+    --red50:#FCEBEB; --red800:#791F1F; --red600:#A32D2D; --red400:#E24B4A;
+    --purple50:#EEEDFE; --purple800:#3C3489; --purple600:#534AB7;
+    --green50:#EAF3DE; --green800:#27500A; --green600:#3B6D11;
+    --gray50:#F1EFE8; --gray800:#444441; --gray600:#5F5E5A;
+    --mono:'Courier New',monospace; --radius:10px; --radius-sm:6px;
+  }
+  @media (prefers-color-scheme:dark) {
+    :root {
+      --bg:#1C1C1A; --surface:#252523; --surface2:#2E2E2B;
+      --border:rgba(255,255,255,0.1); --border2:rgba(255,255,255,0.18);
+      --text:#F0EEE8; --text2:#A8A8A0; --text3:#666660;
+      --blue50:#042C53; --blue800:#B5D4F4; --blue600:#378ADD; --blue200:#185FA5;
+      --teal50:#04342C; --teal800:#9FE1CB; --teal600:#1D9E75; --teal400:#5DCAA5;
+      --amber50:#412402; --amber800:#FAC775; --amber600:#EF9F27; --amber400:#BA7517;
+      --red50:#501313; --red800:#F09595; --red600:#E24B4A; --red400:#F7C1C1;
+      --purple50:#26215C; --purple800:#AFA9EC; --purple600:#7F77DD;
+      --green50:#173404; --green800:#C0DD97; --green600:#639922;
+      --gray50:#2C2C2A; --gray800:#D3D1C7; --gray600:#888780;
+    }
+  }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; font-size:14px; line-height:1.5; }
+  .app { max-width:1100px; margin:0 auto; padding:24px 20px 56px; }
+  .page-header { margin-bottom:24px; }
+  .page-header h1 { font-size:20px; font-weight:500; margin-bottom:4px; }
+  .page-header p { font-size:13px; color:var(--text2); }
+  .badge { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:500; }
+  .badge-blue{background:var(--blue50);color:var(--blue800);}
+  .badge-teal{background:var(--teal50);color:var(--teal800);}
+  .badge-amber{background:var(--amber50);color:var(--amber800);}
+  .badge-red{background:var(--red50);color:var(--red800);}
+  .badge-purple{background:var(--purple50);color:var(--purple800);}
+  .badge-green{background:var(--green50);color:var(--green800);}
+  .badge-gray{background:var(--gray50);color:var(--gray800);}
+  .layout { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  @media(max-width:720px){.layout{grid-template-columns:1fr;}}
+  .panel { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+  .panel-header { display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:0.5px solid var(--border); background:var(--surface2); }
+  .panel-title { font-size:13px; font-weight:500; flex:1; }
+  .panel-body { padding:16px; }
+  .code-block { background:var(--surface2); border-radius:var(--radius-sm); overflow-x:auto; font-family:var(--mono); font-size:12px; line-height:1.8; }
+  .code-line { display:flex; align-items:flex-start; padding:0 14px; transition:background 0.3s; }
+  .code-line.hl { background:var(--amber50); }
+  .code-line.hl .ln { color:var(--amber800); }
+  .ln { color:var(--text3); min-width:28px; user-select:none; line-height:1.8; font-size:11px; }
+  .code-content { flex:1; white-space:pre; }
+  .kw{color:var(--blue600);} .ty{color:var(--teal600);} .fn{color:var(--purple600);} .cm{color:var(--text3);font-style:italic;} .st{color:var(--amber600);}
+  @media(prefers-color-scheme:dark){.kw{color:var(--blue200);}.ty{color:var(--teal400);}.fn{color:var(--purple800);}.st{color:var(--amber400);}}
+  .field-group { margin-bottom:14px; }
+  .field-label { font-size:12px; color:var(--text2); margin-bottom:5px; font-weight:500; }
+  .field-row { display:flex; gap:8px; align-items:center; }
+  input[type="text"],input[type="number"],select { background:var(--surface2); border:0.5px solid var(--border2); border-radius:var(--radius-sm); padding:8px 10px; font-size:13px; color:var(--text); outline:none; font-family:inherit; width:100%; transition:border-color 0.15s; }
+  input:focus,select:focus{border-color:var(--blue600);}
+  select{cursor:pointer;}
+  .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:var(--radius-sm); font-size:13px; font-weight:500; cursor:pointer; border:0.5px solid var(--border2); background:transparent; color:var(--text); transition:all 0.15s; white-space:nowrap; font-family:inherit; }
+  .btn:hover{background:var(--surface2);}
+  .btn-primary{background:var(--blue800);color:var(--blue50);border-color:var(--blue800);}
+  .btn-primary:hover{opacity:0.88;background:var(--blue800);}
+  .btn-success{background:var(--teal600);color:var(--teal50);border-color:var(--teal600);}
+  .btn-success:hover{opacity:0.88;background:var(--teal600);}
+  .btn-danger{background:var(--red600);color:var(--red50);border-color:var(--red600);}
+  .btn-danger:hover{opacity:0.88;background:var(--red600);}
+  .btn-amber{background:var(--amber600);color:var(--amber50);border-color:var(--amber600);}
+  .btn-amber:hover{opacity:0.88;background:var(--amber600);}
+  .btn:disabled{opacity:0.38;cursor:not-allowed;pointer-events:none;}
+  .state-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .state-table th{text-align:left;padding:6px 10px;font-size:11px;font-weight:500;color:var(--text2);border-bottom:0.5px solid var(--border);text-transform:uppercase;letter-spacing:0.05em;}
+  .state-table td{padding:8px 10px;border-bottom:0.5px solid var(--border);}
+  .state-table tr:last-child td{border-bottom:none;}
+  .addr{font-family:var(--mono);font-size:11px;color:var(--text2);}
+  .tx-log{max-height:220px;overflow-y:auto;}
+  .tx-item{padding:10px 12px;border-bottom:0.5px solid var(--border);font-size:12px;line-height:1.6;animation:fadeIn 0.3s ease;}
+  .tx-item:last-child{border-bottom:none;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1}}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+  @keyframes pulseRed{0%,100%{box-shadow:0 0 0 0 rgba(226,75,74,0)}50%{box-shadow:0 0 0 3px rgba(226,75,74,0.35)}}
+  .tx-hash{font-family:var(--mono);font-size:11px;color:var(--text3);}
+  .tx-from{font-family:var(--mono);font-size:11px;}
+  .tx-gas{color:var(--amber800);background:var(--amber50);padding:1px 6px;border-radius:4px;font-size:11px;font-family:var(--mono);}
+  .tx-empty{padding:24px;text-align:center;color:var(--text3);font-size:13px;}
+  .chain-visual{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:4px;}
+  .block-card{min-width:148px;flex-shrink:0;border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:10px 12px;background:var(--surface2);font-size:11px;transition:all 0.45s;}
+  .block-card.genesis{border-color:var(--teal600);}
+  .block-card.new-block{border-color:var(--blue600);background:var(--blue50);}
+  .block-card.tampered{border:1.5px solid var(--red600)!important;background:var(--red50)!important;animation:pulseRed 1.5s infinite,shake 0.4s ease;}
+  .block-card.invalid{border:1.5px solid var(--red400)!important;background:var(--red50)!important;opacity:0.85;}
+  .block-card.healed{border:1.5px solid var(--amber600)!important;background:var(--amber50)!important;}
+  .block-arrow{display:flex;align-items:center;padding:0 5px;color:var(--text3);font-size:16px;flex-shrink:0;transition:color 0.4s;}
+  .block-arrow.broken{color:var(--red400);}
+  .block-num{font-size:10px;font-weight:500;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;}
+  .block-hash{font-family:var(--mono);font-size:10px;color:var(--text3);word-break:break-all;margin-bottom:5px;}
+  .block-hash.changed{color:var(--red800);font-weight:500;}
+  .block-hash.invalid-ref{color:var(--red400);}
+  .block-prevhash{font-family:var(--mono);font-size:10px;margin-bottom:4px;}
+  .block-txs{font-size:11px;}
+  .block-txs span{display:block;color:var(--text2);line-height:1.5;}
+  .block-status{font-size:10px;margin-top:5px;font-weight:500;}
+  .block-status.ok{color:var(--teal800);}
+  .block-status.bad{color:var(--red800);}
+  .gas-meter{margin-top:14px;}
+  .gas-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}
+  .gas-bar-track{height:8px;background:var(--surface2);border-radius:4px;border:0.5px solid var(--border);overflow:hidden;}
+  .gas-bar-fill{height:100%;border-radius:4px;background:var(--teal400);transition:width 0.6s cubic-bezier(.4,0,.2,1);}
+  .gas-bar-fill.warn{background:var(--amber400);}
+  .gas-bar-fill.danger{background:var(--red400);}
+  .toast{padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-top:12px;display:none;animation:fadeIn 0.3s ease;}
+  .toast.ok{background:var(--teal50);color:var(--teal800);border:0.5px solid var(--teal600);}
+  .toast.err{background:var(--red50);color:var(--red800);border:0.5px solid var(--red600);}
+  .toast.warn{background:var(--amber50);color:var(--amber800);border:0.5px solid var(--amber600);}
+  .toast.show{display:block;}
+  .step-indicator{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+  .step-dot{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);}
+  .step-dot.active{color:var(--text);}
+  .step-dot.done{color:var(--teal800);}
+  .dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;border:0.5px solid var(--border2);background:var(--surface2);color:var(--text3);transition:all 0.3s;}
+  .step-dot.active .dot{background:var(--blue800);color:var(--blue50);border-color:var(--blue800);}
+  .step-dot.done .dot{background:var(--teal600);color:var(--teal50);border-color:var(--teal600);}
+  .sep{height:0.5px;background:var(--border);margin:14px 0;}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .explain-box{padding:12px 14px;border-radius:var(--radius-sm);font-size:12px;line-height:1.7;color:var(--text2);border-left:2px solid var(--blue600);background:var(--blue50);margin-top:12px;}
+  .explain-box strong{color:var(--blue800);font-weight:500;}
+  .explain-box.red{border-left-color:var(--red600);background:var(--red50);color:var(--red800);}
+  .explain-box.red strong{color:var(--red800);}
+  .explain-box.amber{border-left-color:var(--amber600);background:var(--amber50);color:var(--amber800);}
+  .explain-box.amber strong{color:var(--amber800);}
+  .votes-bar-wrap{margin-top:14px;}
+  .votes-bar-row{margin-bottom:10px;}
+  .votes-bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;}
+  .votes-bar-track{height:10px;background:var(--surface2);border-radius:5px;border:0.5px solid var(--border);overflow:hidden;}
+  .votes-bar-fill{height:100%;border-radius:5px;transition:width 0.6s cubic-bezier(.4,0,.2,1);}
+  .winner-box{display:none;margin-top:14px;padding:12px 14px;border-radius:var(--radius-sm);background:var(--teal50);color:var(--teal800);font-size:13px;font-weight:500;border:0.5px solid var(--teal600);text-align:center;}
+  .winner-box.show{display:block;animation:fadeIn 0.4s ease;}
+
+  /* TAMPER SECTION */
+  .tamper-section{margin-top:0;margin-bottom:16px;}
+  .tamper-warning{padding:14px 16px;background:var(--red50);border:1.5px solid var(--red600);border-radius:var(--radius);margin-bottom:14px;}
+  .tamper-warning-head{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--red800);margin-bottom:6px;}
+  .tamper-warning p{font-size:12px;color:var(--red800);line-height:1.7;}
+  .tamper-card{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  .tamper-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:0.5px solid var(--border);background:var(--surface2);}
+  .tamper-body{padding:16px;}
+  .cascade-visual{display:flex;gap:6px;align-items:stretch;overflow-x:auto;padding:12px 0 4px;}
+  .cv-block{min-width:120px;flex-shrink:0;border-radius:var(--radius-sm);padding:10px 11px;font-size:11px;border:0.5px solid var(--border2);background:var(--surface2);transition:all 0.5s;}
+  .cv-block.cv-ok{border-color:var(--teal600);background:var(--teal50);}
+  .cv-block.cv-tampered{border:1.5px solid var(--red600);background:var(--red50);animation:pulseRed 1.5s infinite;}
+  .cv-block.cv-invalid{border:1px solid var(--red400);background:var(--red50);opacity:0.9;}
+  .cv-block.cv-fixed{border:1.5px solid var(--amber600);background:var(--amber50);}
+  .cv-arrow{display:flex;align-items:center;padding:0 3px;color:var(--text3);font-size:14px;flex-shrink:0;transition:color 0.5s;}
+  .cv-arrow.broken{color:var(--red400);}
+  .cv-label{font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;}
+  .cv-hash{font-family:var(--mono);font-size:10px;word-break:break-all;margin-bottom:3px;}
+  .cv-prev{font-family:var(--mono);font-size:9px;margin-bottom:3px;}
+  .cv-data{font-size:10px;line-height:1.4;margin-bottom:3px;}
+  .cv-status{font-size:10px;font-weight:500;}
+  .cv-ok .cv-label,.cv-ok .cv-status{color:var(--teal800);}
+  .cv-ok .cv-hash,.cv-ok .cv-prev,.cv-ok .cv-data{color:var(--text2);}
+  .cv-tampered .cv-label{color:var(--red800);}
+  .cv-tampered .cv-hash{color:var(--red600);font-weight:500;}
+  .cv-tampered .cv-prev,.cv-tampered .cv-data{color:var(--red800);}
+  .cv-tampered .cv-status{color:var(--red800);}
+  .cv-invalid .cv-label{color:var(--red800);}
+  .cv-invalid .cv-hash,.cv-invalid .cv-prev,.cv-invalid .cv-data{color:var(--red600);}
+  .cv-invalid .cv-status{color:var(--red600);}
+  .cv-fixed .cv-label{color:var(--amber800);}
+  .cv-fixed .cv-hash,.cv-fixed .cv-prev,.cv-fixed .cv-data{color:var(--amber800);}
+  .cv-fixed .cv-status{color:var(--amber800);}
+  .cascade-log{margin-top:10px;font-size:12px;line-height:1.8;padding:10px 12px;background:var(--surface2);border-radius:var(--radius-sm);color:var(--text2);min-height:44px;}
+  .cascade-log .cl-red{color:var(--red800);}
+  .cascade-log .cl-amber{color:var(--amber800);}
+  .cascade-log .cl-green{color:var(--teal800);}
+  .cascade-log .cl-bold{font-weight:500;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="page-header">
+  <h1>Smart Contract — Votação descentralizada</h1>
+  <p>Simulador interativo · Seminário de Blockchain em Sistemas Distribuídos</p>
+</div>
+
+<div class="step-indicator" id="steps">
+  <div class="step-dot active" id="step-1"><div class="dot">1</div>Deploy</div>
+  <div class="step-dot" id="step-2"><div class="dot">2</div>Registrar</div>
+  <div class="step-dot" id="step-3"><div class="dot">3</div>Votar</div>
+  <div class="step-dot" id="step-4"><div class="dot">4</div>Resultado</div>
+  <div class="step-dot" id="step-5"><div class="dot">5</div>Simular adulteração</div>
+</div>
+
+<div class="layout">
+  <!-- CÓDIGO SOLIDITY -->
+  <div class="panel">
+    <div class="panel-header">
+      <i class="ti ti-file-code" style="font-size:16px;color:var(--text2)" aria-hidden="true"></i>
+      <span class="panel-title">Votacao.sol</span>
+      <span class="badge badge-blue">Solidity 0.8</span>
+    </div>
+    <div class="panel-body" style="padding:0;">
+      <div class="code-block" style="padding:10px 0;">
+        <div class="code-line" id="cl1"><span class="ln">1</span><span class="code-content"><span class="cm">// SPDX-License-Identifier: MIT</span></span></div>
+        <div class="code-line" id="cl2"><span class="ln">2</span><span class="code-content"><span class="kw">pragma solidity</span> ^0.8.0;</span></div>
+        <div class="code-line" id="cl3"><span class="ln">3</span><span class="code-content"></span></div>
+        <div class="code-line" id="cl4"><span class="ln">4</span><span class="code-content"><span class="kw">contract</span> <span class="ty">Votacao</span> {</span></div>
+        <div class="code-line" id="cl5"><span class="ln">5</span><span class="code-content">  <span class="ty">address</span> <span class="kw">public</span> dono;</span></div>
+        <div class="code-line" id="cl6"><span class="ln">6</span><span class="code-content">  <span class="ty">string</span>[] <span class="kw">public</span> candidatos;</span></div>
+        <div class="code-line" id="cl7"><span class="ln">7</span><span class="code-content">  <span class="ty">mapping</span>(<span class="ty">uint</span> => <span class="ty">uint</span>) <span class="kw">public</span> votos;</span></div>
+        <div class="code-line" id="cl8"><span class="ln">8</span><span class="code-content">  <span class="ty">mapping</span>(<span class="ty">address</span> => <span class="ty">bool</span>) <span class="kw">public</span> jaVotou;</span></div>
+        <div class="code-line" id="cl9"><span class="ln">9</span><span class="code-content">  <span class="ty">mapping</span>(<span class="ty">address</span> => <span class="ty">bool</span>) <span class="kw">public</span> eleitorRegistrado;</span></div>
+        <div class="code-line" id="cl10"><span class="ln">10</span><span class="code-content">  <span class="ty">bool</span> <span class="kw">public</span> votacaoAberta = <span class="kw">false</span>;</span></div>
+        <div class="code-line" id="cl11"><span class="ln">11</span><span class="code-content"></span></div>
+        <div class="code-line" id="cl12"><span class="ln">12</span><span class="code-content">  <span class="fn">constructor</span>(<span class="ty">string</span>[] <span class="kw">memory</span> _cands) {</span></div>
+        <div class="code-line" id="cl13"><span class="ln">13</span><span class="code-content">    dono = <span class="kw">msg.sender</span>;</span></div>
+        <div class="code-line" id="cl14"><span class="ln">14</span><span class="code-content">    candidatos = _cands;</span></div>
+        <div class="code-line" id="cl15"><span class="ln">15</span><span class="code-content">    votacaoAberta = <span class="kw">true</span>;</span></div>
+        <div class="code-line" id="cl16"><span class="ln">16</span><span class="code-content">  }</span></div>
+        <div class="code-line" id="cl17"><span class="ln">17</span><span class="code-content"></span></div>
+        <div class="code-line" id="cl18"><span class="ln">18</span><span class="code-content">  <span class="kw">function</span> <span class="fn">registrar</span>(<span class="ty">address</span> _eleitor) <span class="kw">public</span> {</span></div>
+        <div class="code-line" id="cl19"><span class="ln">19</span><span class="code-content">    <span class="kw">require</span>(msg.sender == dono);</span></div>
+        <div class="code-line" id="cl20"><span class="ln">20</span><span class="code-content">    eleitorRegistrado[_eleitor] = <span class="kw">true</span>;</span></div>
+        <div class="code-line" id="cl21"><span class="ln">21</span><span class="code-content">  }</span></div>
+        <div class="code-line" id="cl22"><span class="ln">22</span><span class="code-content"></span></div>
+        <div class="code-line" id="cl23"><span class="ln">23</span><span class="code-content">  <span class="kw">function</span> <span class="fn">votar</span>(<span class="ty">uint</span> _id) <span class="kw">public</span> {</span></div>
+        <div class="code-line" id="cl24"><span class="ln">24</span><span class="code-content">    <span class="kw">require</span>(votacaoAberta);</span></div>
+        <div class="code-line" id="cl25"><span class="ln">25</span><span class="code-content">    <span class="kw">require</span>(eleitorRegistrado[msg.sender]);</span></div>
+        <div class="code-line" id="cl26"><span class="ln">26</span><span class="code-content">    <span class="kw">require</span>(!jaVotou[msg.sender]);</span></div>
+        <div class="code-line" id="cl27"><span class="ln">27</span><span class="code-content">    jaVotou[msg.sender] = <span class="kw">true</span>;</span></div>
+        <div class="code-line" id="cl28"><span class="ln">28</span><span class="code-content">    votos[_id]++;</span></div>
+        <div class="code-line" id="cl29"><span class="ln">29</span><span class="code-content">  }</span></div>
+        <div class="code-line" id="cl30"><span class="ln">30</span><span class="code-content"></span></div>
+        <div class="code-line" id="cl31"><span class="ln">31</span><span class="code-content">  <span class="kw">function</span> <span class="fn">resultado</span>() <span class="kw">public view</span> <span class="kw">returns</span>(<span class="ty">string</span> <span class="kw">memory</span>) {</span></div>
+        <div class="code-line" id="cl32"><span class="ln">32</span><span class="code-content">    <span class="ty">uint</span> max = 0; <span class="ty">uint</span> idx = 0;</span></div>
+        <div class="code-line" id="cl33"><span class="ln">33</span><span class="code-content">    <span class="kw">for</span>(<span class="ty">uint</span> i=0; i&lt;candidatos.<span class="fn">length</span>; i++)</span></div>
+        <div class="code-line" id="cl34"><span class="ln">34</span><span class="code-content">      <span class="kw">if</span>(votos[i] > max){ max=votos[i]; idx=i; }</span></div>
+        <div class="code-line" id="cl35"><span class="ln">35</span><span class="code-content">    <span class="kw">return</span> candidatos[idx];</span></div>
+        <div class="code-line" id="cl36"><span class="ln">36</span><span class="code-content">  }</span></div>
+        <div class="code-line" id="cl37"><span class="ln">37</span><span class="code-content">}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INTERAÇÃO -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+    <div class="panel" id="panel-deploy">
+      <div class="panel-header">
+        <i class="ti ti-rocket" style="font-size:16px;color:var(--text2)" aria-hidden="true"></i>
+        <span class="panel-title">1. Deploy do contrato</span>
+        <span class="badge badge-gray" id="badge-deploy">Pendente</span>
+      </div>
+      <div class="panel-body">
+        <div class="field-group">
+          <div class="field-label">Candidatos (separados por vírgula)</div>
+          <input type="text" id="inp-cands" value="Alice, Bruno, Carla">
+        </div>
+        <div class="field-group">
+          <div class="field-label">Conta implantadora (dono)</div>
+          <input type="text" id="inp-owner" value="0xDono...A1B2" readonly style="color:var(--text2)">
+        </div>
+        <button class="btn btn-primary" onclick="doDeploy()" id="btn-deploy">
+          <i class="ti ti-player-play" aria-hidden="true"></i> Deploy
+        </button>
+        <div class="toast" id="toast-deploy"></div>
+        <div class="explain-box">
+          <strong>O que acontece:</strong> o bytecode do contrato é enviado numa transação especial. A EVM executa o constructor, armazena o estado inicial e retorna um endereço permanente na blockchain.
+        </div>
+      </div>
+    </div>
+    <div class="panel" id="panel-reg" style="opacity:0.45;pointer-events:none;">
+      <div class="panel-header">
+        <i class="ti ti-user-plus" style="font-size:16px;color:var(--text2)" aria-hidden="true"></i>
+        <span class="panel-title">2. Registrar eleitores</span>
+        <span class="badge badge-gray" id="badge-reg">Bloqueado</span>
+      </div>
+      <div class="panel-body">
+        <div class="field-group">
+          <div class="field-label">Endereço do eleitor</div>
+          <div class="field-row">
+            <select id="sel-voter" style="flex:1;">
+              <option value="0xVoter...1111">0xVoter...1111 (Ana)</option>
+              <option value="0xVoter...2222">0xVoter...2222 (Pedro)</option>
+              <option value="0xVoter...3333">0xVoter...3333 (Julia)</option>
+              <option value="0xVoter...4444">0xVoter...4444 (Lucas)</option>
+              <option value="0xVoter...5555">0xVoter...5555 (David)</option>
+              <option value="0xVoter...6666">0xVoter...6666 (Arthur)</option>
+            </select>
+            <button class="btn btn-success" onclick="doRegister()" style="flex-shrink:0;">
+              <i class="ti ti-check" aria-hidden="true"></i> Registrar
+            </button>
+          </div>
+        </div>
+        <div class="toast" id="toast-reg"></div>
+        <div class="explain-box">
+          <strong>require(msg.sender == dono):</strong> apenas o endereço que fez o deploy pode chamar essa função. Qualquer outro é bloqueado automaticamente pela EVM.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- VOTAR -->
+  <div class="panel" id="panel-vote" style="opacity:0.45;pointer-events:none;">
+    <div class="panel-header">
+      <i class="ti ti-ballot" style="font-size:16px;color:var(--text2)" aria-hidden="true"></i>
+      <span class="panel-title">3. Votar</span>
+      <span class="badge badge-gray" id="badge-vote">Bloqueado</span>
+    </div>
+    <div class="panel-body">
+      <div class="field-group">
+        <div class="field-label">Votar como</div>
+        <select id="sel-from"></select>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Candidato</div>
+        <select id="sel-cand"></select>
+      </div>
+      <div class="field-group">
+        <div class="field-label" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>Gas Limit da transação</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--text3);">votar() custa ~52.000–60.000</span>
+        </div>
+        <div class="field-row">
+          <input type="number" id="inp-gas-limit" value="100000" min="1000" max="500000" step="1000" style="flex:1;">
+          <button class="btn" onclick="setGasPreset('enough')" style="flex-shrink:0;font-size:11px;padding:7px 10px;" title="Suficiente para votar">✅ OK</button>
+          <button class="btn btn-danger" onclick="setGasPreset('low')" style="flex-shrink:0;font-size:11px;padding:7px 10px;" title="Abaixo do mínimo">⛽ Baixo</button>
+        </div>
+        <div style="margin-top:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:3px;">
+            <span>Limite definido</span>
+            <span id="gas-limit-display" style="font-family:var(--mono);">100,000</span>
+          </div>
+          <div style="height:6px;background:var(--surface2);border-radius:3px;border:0.5px solid var(--border);overflow:hidden;">
+            <div id="gas-limit-bar" style="height:100%;border-radius:3px;background:var(--teal400);width:20%;transition:width 0.4s,background 0.3s;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn btn-primary" onclick="doVote()"><i class="ti ti-send" aria-hidden="true"></i> Enviar voto</button>
+        <button class="btn btn-danger" onclick="doDoubleVote()"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Tentar votar 2x</button>
+      </div>
+      <div class="toast" id="toast-vote"></div>
+      <div class="explain-box">
+        <strong>require(!jaVotou[msg.sender]):</strong> o estado do contrato registra permanentemente que o endereço votou. Na segunda tentativa, a EVM rejeita — é o double-spend bloqueado em código.
+      </div>
+    </div>
+  </div>
+
+  <!-- ESTADO -->
+  <div class="panel">
+    <div class="panel-header">
+      <i class="ti ti-database" style="font-size:16px;color:var(--text2)" aria-hidden="true"></i>
+      <span class="panel-title">Estado do contrato (storage)</span>
+      <span class="badge badge-purple" id="badge-contract-addr" style="display:none;font-family:var(--mono);font-size:10px;">0xContr...CAFE</span>
+    </div>
+    <div class="panel-body">
+      <div id="state-empty" style="text-align:center;padding:28px 0;color:var(--text3);font-size:13px;">
+        <i class="ti ti-database-off" style="font-size:28px;display:block;margin-bottom:8px" aria-hidden="true"></i>
+        Aguardando deploy...
+      </div>
+      <div id="state-content" style="display:none;">
+        <div style="font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Variáveis de estado</div>
+        <table class="state-table"><thead><tr><th>Variável</th><th>Valor</th></tr></thead><tbody id="state-vars"></tbody></table>
+        <div class="sep"></div>
+        <div style="font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">Contagem de votos</div>
+        <div class="votes-bar-wrap" id="votes-bars"></div>
+        <div class="winner-box" id="winner-box"></div>
+        <div class="gas-meter">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;">Gas do bloco atual</span>
+            <span style="font-family:var(--mono);font-size:12px;" id="block-gas-display">0 / 300,000</span>
+          </div>
+          <div class="gas-bar-track" style="height:10px;">
+            <div class="gas-bar-fill" id="block-gas-fill" style="width:0%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:3px;">
+            <span>0</span>
+            <span id="block-gas-pct">0%</span>
+            <span>Block Gas Limit: 300,000</span>
+          </div>
+          <div id="block-full-banner" style="display:none;margin-top:8px;padding:9px 12px;background:var(--red50);border:1px solid var(--red600);border-radius:var(--radius-sm);font-size:12px;color:var(--red800);">
+            <i class="ti ti-lock" style="font-size:13px;margin-right:5px" aria-hidden="true"></i>
+            <strong>Bloco cheio</strong> — novas transações rejeitadas até o próximo bloco ser minerado.
+            <button class="btn btn-success" onclick="mineNewBlock()" style="margin-top:6px;width:100%;justify-content:center;">
+              <i class="ti ti-pickaxe" aria-hidden="true"></i> Minerar novo bloco (zerar gas do bloco)
+            </button>
+          </div>
+          <div class="sep" style="margin:10px 0 8px;"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-size:11px;color:var(--text2);">Gas total da sessão</span>
+            <span style="font-family:var(--mono);font-size:12px;" id="gas-total">0</span>
+          </div>
+          <div class="gas-bar-track"><div class="gas-bar-fill" id="gas-fill" style="width:0%;height:6px;"></div></div>
+          <div style="margin-top:10px;padding:8px 10px;background:var(--surface2);border-radius:var(--radius-sm);border:0.5px solid var(--border);">
+            <div style="font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Última transação</div>
+            <div id="last-tx-gas-detail" style="font-size:12px;color:var(--text3);">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BLOCKCHAIN VISUAL + TX LOG -->
+<div class="layout">
+  <div class="panel">
+    <div class="panel-header">
+      <i class="ti ti-link" style="font-size:16px;color:var(--text2)" aria-hidden="true"></i>
+      <span class="panel-title">Blockchain — blocos gerados</span>
+    </div>
+    <div class="panel-body" style="padding:12px 8px;">
+      <div class="chain-visual" id="chain-visual">
+        <div class="block-card genesis" data-blockidx="0">
+          <div class="block-num">Bloco #0</div>
+          <div class="block-hash">0x000000...genesis</div>
+          <div class="block-txs"><span style="color:var(--teal800);">Bloco gênesis</span></div>
+          <div class="block-status ok"><i class="ti ti-check" style="font-size:10px"></i> Válido</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-header">
+      <i class="ti ti-list" style="font-size:16px;color:var(--text2)" aria-hidden="true"></i>
+      <span class="panel-title">Log de transações</span>
+      <button class="btn" style="padding:4px 10px;font-size:11px;" onclick="clearLog()"><i class="ti ti-trash" aria-hidden="true"></i></button>
+    </div>
+    <div class="tx-log" id="tx-log"><div class="tx-empty">Nenhuma transação ainda</div></div>
+  </div>
+</div>
+
+<!-- RESULTADO -->
+<div class="panel" id="panel-result" style="opacity:0.45;pointer-events:none;margin-bottom:16px;">
+  <div class="panel-header">
+    <i class="ti ti-trophy" style="font-size:16px;color:var(--text2)" aria-hidden="true"></i>
+    <span class="panel-title">4. Consultar resultado (view — sem gas)</span>
+    <span class="badge badge-gray" id="badge-result">Bloqueado</span>
+  </div>
+  <div class="panel-body">
+    <div class="row">
+      <button class="btn btn-primary" onclick="doResult()"><i class="ti ti-eye" aria-hidden="true"></i> Chamar resultado()</button>
+      <span style="font-size:12px;color:var(--text2);">Funções <code>view</code> leem estado sem alterar — 0 gas</span>
+    </div>
+    <div class="toast" id="toast-result"></div>
+  </div>
+</div>
+
+<!-- ===== SEÇÃO 5: ADULTERAÇÃO ===== -->
+<div class="tamper-section" id="tamper-section" style="opacity:0.45;pointer-events:none;">
+  <div class="tamper-warning">
+    <div class="tamper-warning-head">
+      <i class="ti ti-skull" style="font-size:18px;" aria-hidden="true"></i>
+      5. Simulação de ataque — adulteração de dados históricos
+    </div>
+    <p>Aqui você age como um atacante tentando reescrever o histórico: mudar em quem um eleitor votou num bloco já confirmado. Veja o que acontece com a cadeia de hashes.</p>
+  </div>
+
+  <div class="tamper-card">
+    <div class="tamper-head">
+      <i class="ti ti-edit" style="font-size:16px;color:var(--red800)" aria-hidden="true"></i>
+      <span class="panel-title" style="color:var(--red800);">Painel do atacante</span>
+      <span class="badge badge-red">Modo adulteração</span>
+    </div>
+    <div class="tamper-body">
+      <div class="layout" style="margin-bottom:12px;">
+        <div>
+          <div class="field-group">
+            <div class="field-label">Bloco a adulterar</div>
+            <select id="sel-tamper-block">
+              <option value="">— vote primeiro para ver blocos —</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <div class="field-label">Alterar voto para</div>
+            <select id="sel-tamper-cand"></select>
+          </div>
+          <div class="row">
+            <button class="btn btn-danger" onclick="doTamper()" id="btn-tamper">
+              <i class="ti ti-pencil" aria-hidden="true"></i> Adulterar bloco
+            </button>
+            <button class="btn btn-amber" onclick="doRemine()" id="btn-remine" style="display:none;">
+              <i class="ti ti-refresh" aria-hidden="true"></i> Tentar re-minerar
+            </button>
+            <button class="btn" onclick="doRestore()" id="btn-restore" style="display:none;">
+              <i class="ti ti-arrow-back" aria-hidden="true"></i> Restaurar cadeia honesta
+            </button>
+          </div>
+          <div class="toast" id="toast-tamper"></div>
+        </div>
+        <div>
+          <div class="explain-box red" id="tamper-explain">
+            <strong>O que vai acontecer:</strong> ao alterar o dado de um bloco, o hash daquele bloco muda completamente (efeito avalanche do SHA-256). Isso quebra o campo <code>prevHash</code> de todos os blocos seguintes — a cadeia inteira fica inválida a partir daquele ponto.
+          </div>
+        </div>
+      </div>
+
+      <!-- VISUALIZAÇÃO EM CASCATA -->
+      <div style="font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Visualização do encadeamento</div>
+      <div class="cascade-visual" id="cascade-visual">
+        <div style="padding:20px;color:var(--text3);font-size:12px;">Vote nos passos anteriores para ver os blocos aqui.</div>
+      </div>
+      <div class="cascade-log" id="cascade-log">Aguardando ação...</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<script>
+let deployed=false, candidates=[], registered={}, voted={}, voteCount={}, blockNum=0, gasTotal=0, txCount=0;
+const GAS_MAX=5000000;
+// Gas limit per block (didactic value — real Ethereum uses ~30M, but 300k makes the demo fill up visibly)
+const BLOCK_GAS_LIMIT=300000;
+let currentBlockGas=0; // gas used so far in the current (pending) block
+const NAMES={'0xVoter...1111':'Ana','0xVoter...2222':'Pedro','0xVoter...3333':'Julia','0xVoter...4444':'Lucas', '0xVoter...5555':'David', '0xVoter...6666':'Arthur'};
+const BAR_COLORS=['#378ADD','#1D9E75','#EF9F27','#D85A30'];
+
+// Block chain data model
+let blocks = [{
+  idx:0, num:0, hash:'0x000000...genesis', prevHash:'0x000000...000000',
+  data:'Genesis', txLabel:'Bloco gênesis', tampered:false, originalData:'Genesis', originalHash:'0x000000...genesis'
+}];
+
+function rndHash(){return '0x'+Array.from({length:8},()=>Math.floor(Math.random()*16).toString(16)).join('')+'...';}
+function rndGas(b){return b+Math.floor(Math.random()*8000);}
+
+function setStep(n){
+  for(let i=1;i<=5;i++){
+    const el=document.getElementById('step-'+i);
+    el.classList.remove('active','done');
+    if(i<n)el.classList.add('done');
+    if(i===n)el.classList.add('active');
+  }
+}
+
+function showToast(id,msg,type='ok'){
+  const t=document.getElementById(id);
+  t.className='toast show '+type;
+  const icon=type==='ok'?'ti-check':type==='warn'?'ti-alert-triangle':'ti-x';
+  t.innerHTML=`<i class="ti ${icon}" style="margin-right:6px"></i>`+msg;
+  setTimeout(()=>t.classList.remove('show'),5000);
+}
+
+function highlightLines(lines){
+  document.querySelectorAll('.code-line').forEach(l=>l.classList.remove('hl'));
+  lines.forEach(n=>{const el=document.getElementById('cl'+n);if(el)el.classList.add('hl');});
+}
+
+function addBlock(txLabel,txs,data){
+  blockNum++;
+  const prevBlock=blocks[blocks.length-1];
+  const hash=rndHash();
+  // storedPrevHash = the prevHash this block permanently recorded at creation.
+  // If the previous block is later tampered, its .hash changes but storedPrevHash stays fixed —
+  // making the mismatch explicit in the cascade view.
+  const storedPrevHash = prevBlock.hash;
+  const blockData={idx:blocks.length,num:blockNum,hash,prevHash:storedPrevHash,storedPrevHash,data,txLabel,tampered:false,originalData:data,originalHash:hash};
+  blocks.push(blockData);
+
+  const prev=document.querySelector('.block-card.new-block');
+  if(prev)prev.classList.remove('new-block');
+  const chain=document.getElementById('chain-visual');
+  const arrow=document.createElement('div');
+  arrow.className='block-arrow';
+  arrow.innerHTML='<i class="ti ti-arrow-right" aria-hidden="true"></i>';
+  const card=document.createElement('div');
+  card.className='block-card new-block';
+  card.dataset.blockidx=blockData.idx;
+  card.innerHTML=`
+    <div class="block-num">Bloco #${blockNum}</div>
+    <div class="block-hash">${hash}</div>
+    <div class="block-txs">${txs.map(t=>`<span>${t}</span>`).join('')}</div>
+    <div class="block-status ok"><i class="ti ti-check" style="font-size:10px"></i> Válido</div>`;
+  chain.appendChild(arrow);chain.appendChild(card);
+  chain.scrollLeft=chain.scrollWidth;
+  renderCascade();
+  updateTamperBlockSelect();
+  return hash;
+}
+
+function addTx(from,desc,gas,ok=true){
+  txCount++;
+  const log=document.getElementById('tx-log');
+  const empty=log.querySelector('.tx-empty');
+  if(empty)empty.remove();
+  const hash=rndHash();
+  const item=document.createElement('div');
+  item.className='tx-item';
+  item.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+      <div>
+        <div style="font-size:12px;${ok?'':'color:var(--red800);'}">${ok?'':'<i class="ti ti-x" style="font-size:12px;margin-right:4px;color:var(--red400)"></i>'}${desc}</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:2px;">de: ${from}</div>
+      </div>
+      <div style="flex-shrink:0;">${ok?`<span class="tx-gas">${gas.toLocaleString()} gas</span>`:'<span class="badge badge-red" style="font-size:10px;">Revertida</span>'}</div>
+    </div>
+    <div class="tx-hash" style="margin-top:4px;">${hash}</div>`;
+  log.prepend(item);
+}
+
+function updateGas(g){
+  gasTotal+=g;
+  currentBlockGas+=g;
+
+  // --- session total bar ---
+  document.getElementById('gas-total').textContent=gasTotal.toLocaleString()+' gas';
+  const sessionPct=Math.min(100,(gasTotal/GAS_MAX)*100);
+  const sessionFill=document.getElementById('gas-fill');
+  sessionFill.style.width=sessionPct+'%';
+  sessionFill.className='gas-bar-fill'+(sessionPct>80?' danger':sessionPct>50?' warn':'');
+
+  // --- block gas bar ---
+  renderBlockGasBar();
+}
+
+function renderBlockGasBar(){
+  const pct=Math.min(100,Math.round((currentBlockGas/BLOCK_GAS_LIMIT)*100));
+  const fill=document.getElementById('block-gas-fill');
+  fill.style.width=pct+'%';
+  fill.className='gas-bar-fill'+(pct>=100?' danger':pct>75?' warn':'');
+  document.getElementById('block-gas-display').textContent=
+    `${currentBlockGas.toLocaleString()} / ${BLOCK_GAS_LIMIT.toLocaleString()}`;
+  document.getElementById('block-gas-pct').textContent=pct+'%';
+
+  const banner=document.getElementById('block-full-banner');
+  if(currentBlockGas>=BLOCK_GAS_LIMIT){
+    banner.style.display='block';
+    // Disable all transaction buttons until user mines a new block
+    ['btn-deploy','btn-vote','btn-dvote'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.disabled=true;
+    });
+    document.querySelectorAll('.btn-success').forEach(b=>{
+      if(!b.getAttribute('onclick')?.includes('mineNewBlock')) b.disabled=true;
+    });
+  } else {
+    banner.style.display='none';
+  }
+}
+
+function mineNewBlock(){
+  // Simulate the network mining a new empty block, resetting block gas to 0
+  currentBlockGas=0;
+  addBlock('Novo bloco (vazio)',['bloco minerado — gas zerado'],'newblock');
+  renderBlockGasBar();
+  // Re-enable transaction buttons
+  ['btn-deploy'].forEach(id=>{const el=document.getElementById(id);if(el&&deployed)el.disabled=true;});
+  document.querySelectorAll('.btn-success').forEach(b=>{b.disabled=false;});
+  // Re-enable vote button only if deploy happened
+  if(deployed){
+    const voteBtn=document.getElementById('btn-vote');
+    if(voteBtn) voteBtn.disabled=false;
+    const dvoteBtn=document.getElementById('btn-dvote');
+    if(dvoteBtn) dvoteBtn.disabled=false;
+  }
+  showToast('toast-vote','Novo bloco minerado — Block Gas Limit zerado. Transações aceitas novamente.','ok');
+}
+
+function renderState(){
+  document.getElementById('state-empty').style.display='none';
+  document.getElementById('state-content').style.display='block';
+  document.getElementById('badge-contract-addr').style.display='inline-flex';
+  const regList=Object.keys(registered).filter(k=>registered[k]).map(k=>NAMES[k]||k).join(', ')||'—';
+  const votedList=Object.keys(voted).filter(k=>voted[k]).map(k=>NAMES[k]||k).join(', ')||'—';
+  document.getElementById('state-vars').innerHTML=`
+    <tr><td style="color:var(--text2)">dono</td><td class="addr">0xDono...A1B2</td></tr>
+    <tr><td style="color:var(--text2)">votacaoAberta</td><td><span class="badge badge-teal">true</span></td></tr>
+    <tr><td style="color:var(--text2)">candidatos</td><td style="font-family:var(--mono);font-size:11px;">[${candidates.join(', ')}]</td></tr>
+    <tr><td style="color:var(--text2)">registrados</td><td style="font-size:12px;">${regList}</td></tr>
+    <tr><td style="color:var(--text2)">já votaram</td><td style="font-size:12px;">${votedList}</td></tr>`;
+  const total=Object.values(voteCount).reduce((a,b)=>a+b,0);
+  document.getElementById('votes-bars').innerHTML=candidates.map((c,i)=>{
+    const v=voteCount[i]||0;
+    const pct=total>0?Math.round((v/total)*100):0;
+    return `<div class="votes-bar-row"><div class="votes-bar-label"><span style="font-weight:500;">${c}</span><span style="font-family:var(--mono);">${v} voto${v!==1?'s':''} (${pct}%)</span></div><div class="votes-bar-track"><div class="votes-bar-fill" style="width:${pct}%;background:${BAR_COLORS[i%BAR_COLORS.length]};"></div></div></div>`;
+  }).join('');
+}
+
+function unlock(id,badgeId,badgeText,badgeClass){
+  const el=document.getElementById(id);
+  el.style.opacity='1';el.style.pointerEvents='auto';
+  document.getElementById(badgeId).className='badge '+badgeClass;
+  document.getElementById(badgeId).textContent=badgeText;
+}
+
+// ---- TAMPER FUNCTIONS ----
+
+function updateTamperBlockSelect(){
+  const sel=document.getElementById('sel-tamper-block');
+  const voteBlocks=blocks.filter(b=>b.data&&b.data.startsWith('vote:'));
+  if(voteBlocks.length===0){sel.innerHTML='<option value="">— vote primeiro —</option>';return;}
+  sel.innerHTML=voteBlocks.map(b=>`<option value="${b.idx}">${b.txLabel} (Bloco #${b.num})</option>`).join('');
+  const selCand=document.getElementById('sel-tamper-cand');
+  selCand.innerHTML=candidates.map((c,i)=>`<option value="${i}">${c}</option>`).join('');
+}
+
+function renderCascade(){
+  const cv=document.getElementById('cascade-visual');
+  if(blocks.length<=1){cv.innerHTML='<div style="padding:20px;color:var(--text3);font-size:12px;">Vote nos passos anteriores para ver os blocos aqui.</div>';return;}
+  cv.innerHTML='';
+  blocks.forEach((b,i)=>{
+    if(i>0){
+      const arr=document.createElement('div');
+      arr.className='cv-arrow'+(b.tampered||isInvalidated(b.idx)?' broken':'');
+      arr.innerHTML='<i class="ti ti-arrow-right" aria-hidden="true"></i>';
+      cv.appendChild(arr);
+    }
+    const cls=b.tampered && b.recomputed ? 'cv-fixed'   // amber: recomputed but still fraudulent
+            : b.tampered               ? 'cv-tampered' // red pulsing: tampered, not yet remined
+            : isInvalidated(b.idx)     ? 'cv-invalid'  // red: chain broken by ancestor
+            :                            'cv-ok';       // green: valid
+
+    const status=b.tampered && b.recomputed
+      ? '<i class="ti ti-refresh" style="font-size:10px"></i> Re-minerado (dados falsos)'
+      : b.tampered
+        ? '<i class="ti ti-alert-triangle" style="font-size:10px"></i> ADULTERADO'
+        : isInvalidated(b.idx)
+          ? '<i class="ti ti-x" style="font-size:10px"></i> prevHash inválido'
+          : '<i class="ti ti-check" style="font-size:10px"></i> Válido';
+    // What this block recorded at creation time (immutable)
+    const storedPrev = i === 0 ? '—' : b.storedPrevHash || b.prevHash;
+    // What the previous block's hash actually is right now
+    const actualPrevHash = i === 0 ? '—' : blocks[i-1].hash;
+    // A mismatch exists when the prev block was tampered/recomputed and got a new hash
+    const prevMismatch = i > 0 && storedPrev !== actualPrevHash;
+
+    const displayHash = (b.tampered || b.recomputed)
+      ? '0x'+Array.from({length:8},()=>Math.floor(Math.random()*16).toString(16)).join('')+'...'
+      : b.hash;
+
+    // Show prevHash field: if mismatched, show both values with a strikethrough on the stored one
+    const prevDisplay = i === 0 ? '—'
+      : prevMismatch
+        ? `<span style="color:var(--red600);text-decoration:line-through;">${storedPrev}</span><br><span style="color:var(--red800);font-weight:500;">atual: ${actualPrevHash}</span>`
+        : storedPrev;
+    const d=document.createElement('div');
+    d.className='cv-block '+cls;
+    d.dataset.blockidx=b.idx;
+    d.innerHTML=`
+      <div class="cv-label">Bloco #${b.num}</div>
+      <div class="cv-hash" style="${b.tampered||b.recomputed?'color:var(--red600);font-weight:500;':''}">hash: ${displayHash}</div>
+      <div class="cv-prev" style="font-size:9px;line-height:1.5;">prev: ${prevDisplay}</div>
+      <div class="cv-data">${b.data==='Genesis'?'gênesis':b.data}</div>
+      <div class="cv-status">${status}</div>`;
+    cv.appendChild(d);
+  });
+  cv.scrollLeft=cv.scrollWidth;
+}
+
+function isInvalidated(idx){
+  // A block is invalidated if ANY ancestor in its chain is tampered OR recomputed
+  // (recomputed = attacker re-mined tampered block with new hash, but subsequent blocks
+  //  still store the OLD prevHash, so they remain invalid)
+  for(let i=1;i<blocks.length;i++){
+    if(blocks[i].idx===idx){
+      const prev=blocks[i-1];
+      if(prev.tampered || prev.recomputed) return true;
+      if(isInvalidated(prev.idx)) return true;
+    }
+  }
+  return false;
+}
+
+function getFirstInvalidatedIdx(){
+  for(let i=1;i<blocks.length;i++){
+    if(blocks[i].tampered)return i;
+    if(isInvalidated(blocks[i].idx))return i;
+  }
+  return -1;
+}
+
+function doTamper(){
+  const selBlock=document.getElementById('sel-tamper-block');
+  const blockIdx=parseInt(selBlock.value);
+  if(isNaN(blockIdx)){showToast('toast-tamper','Selecione um bloco com voto para adulterar.','err');return;}
+  const newCandIdx=parseInt(document.getElementById('sel-tamper-cand').value);
+  const block=blocks.find(b=>b.idx===blockIdx);
+  if(!block){return;}
+
+  const originalData=block.data;
+  const parts=originalData.split('→');
+  const voter=parts[0]?parts[0].replace('vote:','').trim():'?';
+  const newCandName=candidates[newCandIdx];
+
+  block.tampered=true;
+  block.data=`vote:${voter}→${newCandName} [ADULTERADO]`;
+
+  const invalCount=blocks.length-1-blocks.indexOf(block);
+
+  renderCascade();
+
+  // update main chain visual too
+  document.querySelectorAll('.block-card[data-blockidx]').forEach(card=>{
+    const ci=parseInt(card.dataset.blockidx);
+    const b=blocks.find(x=>x.idx===ci);
+    if(!b)return;
+    const statusEl=card.querySelector('.block-status');
+    if(b.tampered){
+      card.classList.remove('new-block');card.classList.add('tampered');
+      if(statusEl){statusEl.className='block-status bad';statusEl.innerHTML='<i class="ti ti-alert-triangle" style="font-size:10px"></i> ADULTERADO';}
+    } else if(isInvalidated(ci)){
+      card.classList.remove('new-block');card.classList.add('invalid');
+      if(statusEl){statusEl.className='block-status bad';statusEl.innerHTML='<i class="ti ti-x" style="font-size:10px"></i> Hash inválido';}
+      const arrows=document.getElementById('chain-visual').querySelectorAll('.block-arrow');
+      arrows.forEach(a=>a.classList.add('broken'));
+    }
+  });
+
+  const isLastBlock = blocks.indexOf(block) === blocks.length - 1;
+  const logEl=document.getElementById('cascade-log');
+  logEl.innerHTML=`
+    <span class="cl-red cl-bold">Adulteração no Bloco #${block.num}!</span><br>
+    Original: <code>${originalData}</code> → Adulterado: <code>${block.data}</code><br>
+    <span class="cl-red">Hash mudou completamente (efeito avalanche SHA-256).</span><br>
+    ${invalCount>0
+      ? `<span class="cl-red cl-bold">${invalCount} bloco${invalCount>1?'s':''} subsequente${invalCount>1?'s':''} com prevHash inválido — cadeia corrompida em cascata.</span>`
+      : `<span class="cl-amber cl-bold">Este é o último bloco — sem cascata. Re-minerar pode resolver a validade estrutural. Tente!</span>`
+    }`;
+
+  document.getElementById('btn-remine').style.display='inline-flex';
+  document.getElementById('btn-restore').style.display='inline-flex';
+  document.getElementById('tamper-explain').className='explain-box red';
+  document.getElementById('tamper-explain').innerHTML= isLastBlock
+    ? `<strong>Atenção — último bloco:</strong> como não há blocos posteriores, re-minerar este bloco pode resolver a invalidade estrutural. Isso ilustra por que transações recentes são mais vulneráveis — a proteção real vem das <strong>confirmações</strong>: cada novo bloco adicionado após o seu aumenta o custo de reversão exponencialmente.`
+    : `<strong>Resultado:</strong> o hash do bloco adulterado mudou. Os ${invalCount} bloco${invalCount!==1?'s':''} seguinte${invalCount!==1?'s':''} apontam para um prevHash que não existe mais — matematicamente inválidos. Para consertar, o atacante precisaria re-minerar toda a cadeia subsequente mais rápido que a rede honesta.`;
+
+  showToast('toast-tamper',`Bloco #${block.num} adulterado${isLastBlock?' — último bloco, sem cascata':' — '+invalCount+' subsequente'+(invalCount!==1?'s':'')+' inválido'+(invalCount!==1?'s':'')}.`,'err');
+  setStep(5);
+}
+
+function doRemine(){
+  const tamperedBlock=blocks.find(b=>b.tampered);
+  if(!tamperedBlock)return;
+
+  const tamperedIdx=blocks.indexOf(tamperedBlock);
+  const subsequentBlocks=blocks.slice(tamperedIdx+1);
+  const isLast=subsequentBlocks.length===0;
+
+  const newHash=rndHash();
+  tamperedBlock.hash=newHash;
+  tamperedBlock.recomputed=true;
+
+  if(isLast){
+    // No blocks after this one — re-mining actually "fixes" the chain structurally.
+    // The data is still fraudulent, but the chain is now valid again. This is the
+    // real vulnerability: recent blocks are much easier to tamper with than old ones.
+    tamperedBlock.tampered=false; // chain is structurally valid again
+    renderCascade();
+    // Also update the main chain visual card back to valid-looking (but show it as amber/warning)
+    document.querySelectorAll('.block-card[data-blockidx]').forEach(card=>{
+      const ci=parseInt(card.dataset.blockidx);
+      if(ci===tamperedBlock.idx){
+        card.classList.remove('tampered','invalid');
+        card.classList.add('healed');
+        const statusEl=card.querySelector('.block-status');
+        if(statusEl){statusEl.className='block-status';statusEl.style.color='var(--amber800)';statusEl.innerHTML='<i class="ti ti-alert-triangle" style="font-size:10px"></i> Re-minerado (fraude)';}
+        const hashEl=card.querySelector('.block-hash');
+        if(hashEl){hashEl.textContent=newHash;hashEl.style.color='var(--amber800)';}
+      }
+    });
+    document.getElementById('cascade-log').innerHTML=`
+      <span class="cl-amber cl-bold">Re-mineração bem-sucedida — era o último bloco!</span><br>
+      Novo hash calculado: <code>${newHash}</code><br>
+      <span class="cl-amber">Como não há blocos posteriores, a cadeia voltou a ser estruturalmente válida.</span><br>
+      <span class="cl-red cl-bold">Porém: os dados dentro do bloco ainda são fraudulentos. A rede honesta detectaria a versão diferente ao comparar com as outras cópias distribuídas.</span><br>
+      <span class="cl-green">Conclusão: blocos recentes são mais vulneráveis. É por isso que esperamos múltiplas confirmações antes de considerar uma transação definitiva (6 blocos no Bitcoin ≈ 1 hora).`;
+    document.getElementById('tamper-explain').className='explain-box amber';
+    document.getElementById('tamper-explain').innerHTML=`<strong>Caso especial — último bloco:</strong> quando não há blocos subsequentes, re-minerar realmente resolve a invalidade estrutural da cadeia. Isso é real — é o motivo pelo qual transações recentes (poucos blocos de confirmação) são mais vulneráveis a reorganizações. A proteção vem das <strong>confirmações</strong>: cada bloco adicionado após o seu aumenta exponencialmente o custo de reversão.`;
+    showToast('toast-tamper','Re-mineração resolveu a cadeia — era o último bloco. Veja a explicação.','warn');
+  } else {
+    // There ARE subsequent blocks — their storedPrevHash still points to the OLD hash.
+    // tampered stays true so isInvalidated() keeps marking them red.
+    renderCascade();
+    const stillInvalid=subsequentBlocks.length;
+    document.getElementById('cascade-log').innerHTML=`
+      <span class="cl-amber cl-bold">Re-mineração do Bloco #${tamperedBlock.num} concluída.</span><br>
+      Novo hash calculado: <code>${newHash}</code><br>
+      <span class="cl-red cl-bold">Mas os ${stillInvalid} bloco${stillInvalid!==1?'s':''} seguinte${stillInvalid!==1?'s':''} ainda armazenam o prevHash ANTIGO — continuam inválidos.</span><br>
+      <span class="cl-red">O atacante precisa re-minerar toda a cadeia subsequente mais rápido que os milhares de nós honestos que seguem adicionando blocos.</span>`;
+    document.getElementById('tamper-explain').className='explain-box amber';
+    document.getElementById('tamper-explain').innerHTML=`<strong>Por que isso falha:</strong> re-minerar 1 bloco não resolve quando há blocos posteriores. Cada bloco seguinte gravou permanentemente o <code>prevHash</code> antigo — todos precisam ser recalculados em cascata, enquanto a rede honesta avança. É uma corrida impossível sem controle de +51% do poder computacional.`;
+    showToast('toast-tamper','Re-mineração não resolve: blocos subsequentes ainda com prevHash inválido.','warn');
+  }
+}
+
+function doRestore(){
+  blocks.forEach(b=>{b.tampered=false;b.recomputed=false;b.hash=b.originalHash;b.data=b.originalData;b.hash=b.originalHash;});
+  renderCascade();
+  document.querySelectorAll('.block-card[data-blockidx]').forEach(card=>{
+    card.classList.remove('tampered','invalid','healed');
+    const ci=parseInt(card.dataset.blockidx);
+    if(ci===blockNum)card.classList.add('new-block');
+    const statusEl=card.querySelector('.block-status');
+    if(statusEl){statusEl.className='block-status ok';statusEl.innerHTML='<i class="ti ti-check" style="font-size:10px"></i> Válido';}
+  });
+  document.querySelectorAll('.block-arrow').forEach(a=>a.classList.remove('broken'));
+  document.getElementById('btn-remine').style.display='none';
+  document.getElementById('btn-restore').style.display='none';
+  document.getElementById('cascade-log').innerHTML='Cadeia restaurada para o estado honesto original.';
+  document.getElementById('tamper-explain').className='explain-box red';
+  document.getElementById('tamper-explain').innerHTML=`<strong>O que vai acontecer:</strong> ao alterar o dado de um bloco, o hash daquele bloco muda completamente (efeito avalanche do SHA-256). Isso quebra o campo <code>prevHash</code> de todos os blocos seguintes — a cadeia inteira fica inválida a partir daquele ponto.`;
+  showToast('toast-tamper','Cadeia restaurada para o estado honesto.','ok');
+  setStep(4);
+}
+
+function getGasLimit(){
+  return parseInt(document.getElementById('inp-gas-limit').value)||100000;
+}
+
+function setGasPreset(type){
+  const val = type==='low' ? 30000 : 100000;
+  document.getElementById('inp-gas-limit').value=val;
+  updateGasLimitBar();
+}
+
+function updateGasLimitBar(){
+  const limit=getGasLimit();
+  const MAX_DISPLAY=500000;
+  const pct=Math.min(100,(limit/MAX_DISPLAY)*100);
+  const bar=document.getElementById('gas-limit-bar');
+  bar.style.width=pct+'%';
+  bar.style.background=limit<50000?'var(--red400)':limit<80000?'var(--amber400)':'var(--teal400)';
+  const disp=document.getElementById('gas-limit-display');
+  if(disp) disp.textContent=limit.toLocaleString();
+}
+
+// Run once DOM is ready (works whether script is in head or body)
+function initGasBar(){
+  const inp=document.getElementById('inp-gas-limit');
+  if(inp){inp.addEventListener('input',updateGasLimitBar);updateGasLimitBar();}
+}
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',initGasBar);}
+else{initGasBar();}
+
+function updateLastTxDetail(used, limit, reverted){
+  const el=document.getElementById('last-tx-gas-detail');
+  if(!el)return;
+  const pct=limit>0?Math.min(100,Math.round((used/limit)*100)):0;
+  const barColor=reverted?'var(--red400)':pct>90?'var(--amber400)':'var(--teal400)';
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+      <span style="color:var(--text2);">Gas usado:</span>
+      <span style="font-family:var(--mono);font-weight:500;color:${reverted?'var(--red800)':'var(--text)'};">${used.toLocaleString()} / ${limit.toLocaleString()}</span>
+    </div>
+    <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:4px;">
+      <div style="height:100%;border-radius:3px;background:${barColor};width:${pct}%;transition:width 0.5s;"></div>
+    </div>
+    <div style="font-size:11px;color:${reverted?'var(--red800)':'var(--teal800)'};">
+      ${reverted
+        ? `<i class="ti ti-flame" style="font-size:11px"></i> <strong>Out of Gas</strong> — ${used.toLocaleString()} gas cobrados, estado revertido, nenhuma alteração persistiu`
+        : `<i class="ti ti-check" style="font-size:11px"></i> Sucesso — ${(limit-used).toLocaleString()} gas restante (${100-pct}% do limite)`
+      }
+    </div>`;
+}
+
+// ---- MAIN ACTIONS ----
+function doDeploy(){
+  if(currentBlockGas>=BLOCK_GAS_LIMIT){
+    showToast('toast-deploy',`<strong>Bloco cheio!</strong> Deploy pendente na mempool — aguarda o próximo bloco.`,'err');
+    return;
+  }
+  const raw=document.getElementById('inp-cands').value;
+  candidates=raw.split(',').map(s=>s.trim()).filter(Boolean);
+  if(candidates.length<2){showToast('toast-deploy','Adicione pelo menos 2 candidatos.','err');return;}
+  candidates.forEach((_,i)=>voteCount[i]=0);
+  deployed=true;
+  highlightLines([12,13,14,15,16]);
+  const gas=rndGas(320000);
+  addBlock('Deploy contrato',['deploy: Votacao.sol'],'deploy');
+  addTx('0xDono...A1B2','deploy: contrato Votacao',gas);
+  updateGas(gas);renderState();
+  document.getElementById('badge-deploy').className='badge badge-teal';
+  document.getElementById('badge-deploy').textContent='Concluído';
+  document.getElementById('btn-deploy').disabled=true;
+  unlock('panel-reg','badge-reg','Ativo','badge-blue');
+  document.getElementById('sel-cand').innerHTML=candidates.map((c,i)=>`<option value="${i}">${c}</option>`).join('');
+  document.getElementById('sel-tamper-cand').innerHTML=candidates.map((c,i)=>`<option value="${i}">${c}</option>`).join('');
+  setStep(2);
+  showToast('toast-deploy',`Contrato em 0xContr...CAFE — ${gas.toLocaleString()} gas`,'ok');
+}
+
+function doRegister(){
+  if(!deployed)return;
+  if(currentBlockGas>=BLOCK_GAS_LIMIT){
+    showToast('toast-reg',`<strong>Bloco cheio!</strong> Transação pendente na mempool — aguarda o próximo bloco.`,'err');
+    return;
+  }
+  const voter=document.getElementById('sel-voter').value;
+  const name=NAMES[voter]||voter;
+  if(registered[voter]){showToast('toast-reg',`${name} já está registrado.`,'err');return;}
+  registered[voter]=true;
+  highlightLines([18,19,20,21]);
+  const gas=rndGas(45000);
+  addBlock(`Registro ${name}`,['registrar: '+name],`reg:${name}`);
+  addTx('0xDono...A1B2',`registrar eleitor ${name}`,gas);
+  updateGas(gas);renderState();
+  showToast('toast-reg',`${name} registrado — ${gas.toLocaleString()} gas`,'ok');
+  const regCount=Object.values(registered).filter(Boolean).length;
+  if(regCount>=1){
+    unlock('panel-vote','badge-vote','Ativo','badge-blue');
+    unlock('panel-result','badge-result','Disponível','badge-blue');
+    document.getElementById('sel-from').innerHTML=Object.keys(registered).filter(k=>registered[k]).map(k=>`<option value="${k}">${NAMES[k]||k}</option>`).join('');
+    setStep(3);
+  }
+}
+
+function doVote(){
+  const voter=document.getElementById('sel-from').value;
+  const candIdx=parseInt(document.getElementById('sel-cand').value);
+  const name=NAMES[voter]||voter;
+  const candName=candidates[candIdx];
+  const gasLimit=getGasLimit();
+
+  // --- Block gas limit check: reject before even trying ---
+  if(currentBlockGas>=BLOCK_GAS_LIMIT){
+    showToast('toast-vote',
+      `<strong>Bloco cheio!</strong> Block Gas Limit atingido (${BLOCK_GAS_LIMIT.toLocaleString()}). ` +
+      `Transação enviada para a mempool — aguarda o próximo bloco.`,'err');
+    addTx(voter,`[BLOCO CHEIO] votar(${candIdx}) — pendente na mempool`,0,false);
+    return;
+  }
+  // Gas cost for votar(): base 52000 + small random variance
+  const gasRequired=rndGas(52000);
+
+  // --- Out of Gas check (happens before any state change in the EVM) ---
+  if(gasRequired>gasLimit){
+    // State is NOT changed — EVM reverts everything, gas up to the limit is still charged
+    highlightLines([23,24,25,26,27,28]);
+    addTx(voter,`[OUT OF GAS] votar(${candIdx}) — ${name}`,gasLimit,false);
+    updateGas(gasLimit); // fee paid = limit (all of it burned)
+    updateLastTxDetail(gasRequired,gasLimit,true);
+    renderState(); // state unchanged — no vote registered
+    showToast('toast-vote',
+      `<strong>Out of Gas!</strong> votar() precisava de ${gasRequired.toLocaleString()} gas, limite era ${gasLimit.toLocaleString()}. ` +
+      `Estado revertido — voto NÃO registrado. ${gasLimit.toLocaleString()} gas cobrados mesmo assim.`,
+      'err');
+    return;
+  }
+
+  // --- Normal require checks ---
+  if(voted[voter]){
+    highlightLines([26]);
+    addTx(voter,`[FALHOU] votar(${candIdx}) — já votou`,0,false);
+    updateLastTxDetail(0,gasLimit,false);
+    showToast('toast-vote',`<strong>Revertida:</strong> ${name} já votou — require(!jaVotou) falhou.`,'err');
+    return;
+  }
+  if(!registered[voter]){
+    highlightLines([25]);
+    addTx(voter,`[FALHOU] votar(${candIdx}) — não registrado`,0,false);
+    updateLastTxDetail(0,gasLimit,false);
+    showToast('toast-vote',`<strong>Revertida:</strong> ${name} não está registrado.`,'err');
+    return;
+  }
+
+  // --- Success ---
+  voted[voter]=true;
+  voteCount[candIdx]=(voteCount[candIdx]||0)+1;
+  highlightLines([23,24,25,26,27,28]);
+  addBlock(`Voto: ${name}→${candName}`,['votar: '+name+' → '+candName],`vote:${name}→${candName}`);
+  addTx(voter,`votar(${candIdx}) — ${name} → ${candName}`,gasRequired);
+  updateGas(gasRequired);
+  updateLastTxDetail(gasRequired,gasLimit,false);
+  renderState();
+  showToast('toast-vote',`Voto de ${name} em ${candName} — ${gasRequired.toLocaleString()} / ${gasLimit.toLocaleString()} gas`,'ok');
+  unlock('tamper-section','','','');
+  document.getElementById('tamper-section').style.opacity='1';
+  document.getElementById('tamper-section').style.pointerEvents='auto';
+  updateTamperBlockSelect();
+  setStep(4);
+}
+
+function doDoubleVote(){
+  const voter=document.getElementById('sel-from').value;
+  const candIdx=parseInt(document.getElementById('sel-cand').value);
+  const name=NAMES[voter]||voter;
+  if(!voted[voter]){showToast('toast-vote',`${name} ainda não votou. Vote primeiro.`,'err');return;}
+  highlightLines([26]);
+  addTx(voter,`[DUPLO VOTO] votar(${candIdx}) — ${name}`,0,false);
+  showToast('toast-vote',`<strong>Revertida!</strong> require(!jaVotou[msg.sender]) bloqueou o double-spend.`,'err');
+}
+
+function doResult(){
+  if(!deployed)return;
+  const total=Object.values(voteCount).reduce((a,b)=>a+b,0);
+  if(total===0){showToast('toast-result','Nenhum voto ainda.','err');return;}
+  let max=0,idx=0;
+  candidates.forEach((c,i)=>{if(voteCount[i]>max){max=voteCount[i];idx=i;}});
+  const winner=candidates[idx];
+  highlightLines([31,32,33,34,35,36]);
+  showToast('toast-result',`Vencedor: <strong>${winner}</strong> com ${max} voto${max!==1?'s':''} — chamada view, 0 gas`,'ok');
+  document.getElementById('winner-box').className='winner-box show';
+  document.getElementById('winner-box').innerHTML=`<i class="ti ti-trophy" style="font-size:18px;margin-right:8px" aria-hidden="true"></i>Vencedor: ${winner} (${max} voto${max!==1?'s':''})`;
+  setStep(5);
+}
+
+function clearLog(){document.getElementById('tx-log').innerHTML='<div class="tx-empty">Log limpo</div>';}
+</script>
+</body>
+</html>
